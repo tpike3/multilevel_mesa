@@ -40,5 +40,5 @@ setup(
     keywords='agent based modeling model ABM simulation multi-agent coaltion game theory',
     packages = ["ml_mesa"],
     #for more elaborate projects with directories of files such as tests etc
-    install_requires=['networkx'],
+    install_requires=['networkx', "mesa"]
 )

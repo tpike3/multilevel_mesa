@@ -1,1 +1,2 @@
 networkx>=2.2
+mesa>=0.8.5

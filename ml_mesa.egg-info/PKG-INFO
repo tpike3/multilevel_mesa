@@ -1,0 +1,64 @@
+Metadata-Version: 1.1
+Name: ml-mesa
+Version: 0.0.1
+Summary: Provides Extension module to Mesa to allow for Heirarhcies and Modules of Agents
+Home-page: https://github.com/tpike3/ml_mesa
+Author: Tom Pike
+Author-email: tpike3@gmu.edu
+License: UNKNOWN
+Description: # Multi_Level Mesa
+        Provides different options for building and 'stepping' modules and heirarchies of agents. 
+        
+        ## Uses
+        
+         
+        
+        ## Requirements
+        
+         
+        
+        ## Installation 
+        
+        ## Implementation
+        
+         
+        
+        ## Required Parameters 
+        
+        
+        ## Default Parameters 
+        
+        
+        
+        ## Example Implementation
+        
+        
+        
+        ## Detailed Description of Module
+        
+        
+        
+        
+                    
+        ## Weaknesses and Choices
+        
+        
+        ## Happy Modeling!
+        
+        
+        
+        
+        
+            
+        
+Keywords: agent based modeling model ABM simulation multi-agent coaltion game theory
+Platform: UNKNOWN
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Artificial Life
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Intended Audience :: Science/Research
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Natural Language :: English
