@@ -286,8 +286,8 @@ class ML_Mesa(RandomActivation):
     
         return edges
     
-    def form_meta(self, process, args = None, determine_id = 'default', \
-                      double = False, policy = None):
+    def form_meta(self, process, *args, determine_id = 'default', \
+                      double = False, policy = None,  **kwargs):
         '''
         Concept: Function works with a user defined process to take in lists of 
         agents who should be gorup together and runs them through the meta_agent 
@@ -314,7 +314,7 @@ class ML_Mesa(RandomActivation):
         '''
 
        
-        for result in process(args): 
+        for result in process(*args, **kwargs): 
             if type(result) != tuple:
                 #remove dead agents if any    
                 edges = self.group_remove(result)
@@ -331,8 +331,7 @@ class ML_Mesa(RandomActivation):
             
                    
    
-    def reassess_meta(self, process, args = None, shuffled = False,\
-                      reintroduce = True):
+    def reassess_meta(self, process, *args, reintroduce = True, **kwargs):
         
         '''
         Purpose: Examine a meta agent to remove or add agents and delete if 
@@ -359,7 +358,7 @@ class ML_Mesa(RandomActivation):
             subs_to_remove = []
             if args == None: 
                 #must receive list of tuples of connected agents
-                peel_list = process(meta_agent)
+                peel_list = process(meta_agent, *args, **kwargs)
                 if peel_list != None: 
                      #allows process output to be two agents or 
                      #tuple of two agents
@@ -492,47 +491,54 @@ class ML_Mesa(RandomActivation):
     #
     ######################################################################
     
-    def net_schedule(self, determine_id = "default", criteria = None,\
-                     threshold = None, double = False, policy = None):
+    def net_schedule(self, link_type = None,\
+                     link_value = None, double = False, policy = None):
         '''
         Concept: Updates schedule specified by link data either type of 
         connection or value
         
         Params: 
-          - criteria - activates network with a link that has a specific
+          - link_type - activates network with a link that has a specific
                        attribute
-          - threshold - activates network with a value of a specific attribute 
+          - link_value - activates network with a value of a specific attribute 
           
         '''
         
-        if criteria != None: 
-            if threshold == None: 
+        if link_type != None: 
+            if link_value == None: 
                 metas = []
-                for edge in self.net.edges.data(criteria): 
+                for edge in self.net.edges.data(link_type): 
                     metas.append((edge[0], edge[1]))
+
             else: 
                 metas = []
-                for edge in self.net.edges.data(criteria): 
-                    if edge[2] >= threshold: 
-                        metas.append((edge[0], edge[1]))
+                for edge in self.net.edges.data(link_type): 
+                    if type(link_value) == str:
+                        if edge[2] == link_value:
+                            metas.append((edge[0], edge[1]))
+                        elif edge[2] >= link_value: 
+                            metas.append((edge[0], edge[1]))
+                    
            
-            self.meta_iterate(metas, determine_id, double, policy)
+            self.meta_iterate(metas, determine_id = "default", double= double,\
+                              policy = policy)
             
         
         else: 
             # Add all linked nodes to schedule
             metas = list(self.net.edges())
-            self.meta_iterate(metas, determine_id, double, policy)
+            self.meta_iterate(metas, determine_id = "default", double= double,\
+                              policy = policy)
             #active_list = []
             #for meta in metas: 
                 
         
-    def reassess_net_schedule(self, criteria = None,\
-                 threshold = None,):
+    def reassess_net_schedule(self, link_type = None,\
+                 link_value = None,):
     #remove metas who are no longer linked
              
         for meta_agent in self.reassess_buffer(): 
-            for link in meta_agent.edge_buffer(criteria, threshold):
+            for link in meta_agent.edge_buffer(link_type, link_value):
                 
                 if self.net.has_edge(link[0], link[1])== False:
                     self.reverse_meta[link[0].unique_id].remove(meta_agent.unique_id)
@@ -638,7 +644,7 @@ class MetaAgent(Agent, ML_Mesa):
         super().__init__(unique_id, model)
         self._agents = agents 
         self.reverse_meta = reverse_meta
-        #for mat of sub_agents is dictionary {unique_id:agent_object}
+        #sub_agents is dictionary {unique_id:agent_object}
         self.sub_agents =sub_agents
         self.subs_by_type = self.make_types(sub_agents)
         self.sub_net = nx.Graph()
@@ -745,18 +751,20 @@ class MetaAgent(Agent, ML_Mesa):
     #
     #######################################################################    
     
-    def edge_buffer(self, criteria, threshold):
+    def edge_buffer(self, link_type, link_value):
         
-        if criteria != None: 
-            if threshold == None: 
+        if link_type != None: 
+            if link_value == None: 
                 metas = []
-                for edge in self.sub_net.edges.data(criteria): 
+                for edge in self.sub_net.edges.data(link_type): 
                     metas.append((edge[0], edge[1]))
             else: 
                 metas = []
-                for edge in self.sub_net.edges.data(criteria): 
-                    if edge[2] <= threshold: 
-                        metas.append((edge[0], edge[1]))
+                for edge in self.sub_net.edges.data(link_type): 
+                    if edge[2] != link_value:
+                            metas.append((edge[0], edge[1]))
+                    elif edge[2] <= link_value: 
+                            metas.append((edge[0], edge[1]))
         else: 
             metas = list(self.sub_net.edges())               
         
