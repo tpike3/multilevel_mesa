@@ -149,7 +149,10 @@ class ML_Mesa(RandomActivation):
                                     meta_sets.discard(m)
                             #remove form master meta
                             del self.metas[m]
-                            
+                            #remove node is exists
+                            if m in self.net:
+                                self.net.remove_node(m)
+                                
             
         
         if agent.unique_id in self.schedule.keys(): 
@@ -162,7 +165,7 @@ class ML_Mesa(RandomActivation):
     #
     ########################################################################
     
-    def meta_iterate(self, metas, determine_id, double, policy ):
+    def meta_iterate(self, metas, determine_id, double, policy, group_net):
         
         
         for edge in metas:
@@ -209,6 +212,8 @@ class ML_Mesa(RandomActivation):
                                    del self.schedule[edge[0].unique_id]
                            if edge[1].unique_id in self.schedule.keys(): 
                                    del self.schedule[edge[1].unique_id]
+                       if group_net == True: 
+                           self.net.add_node(ma)
                    #one is part of a meta_agent so the other will join
                    elif self.reverse_meta[edge[0].unique_id] == set() or \
                    self.reverse_meta[edge[1].unique_id] == set():  
@@ -216,12 +221,10 @@ class ML_Mesa(RandomActivation):
                           #get the meta_agent
                           for agent in self.reverse_meta[edge[1].unique_id]:
                               meta_a = agent
-                              if meta_a not in self.schedule.keys():
-                                  print (meta_a)
-                                  print ("issue")
                               break
-                          # add to schedule
-                          self.schedule[meta_a].add([edge[0]]) #MetaAgent add function
+                         
+                          self.metas[meta_a].add([edge[0]])
+                          #self.schedule[meta_a].add([edge[0]]) #MetaAgent add function
                           #add to reverse
                           self.reverse_meta[edge[0].unique_id].add(meta_a) #set add function
                           #add to network
@@ -233,13 +236,10 @@ class ML_Mesa(RandomActivation):
                       else: 
                           for agent in self.reverse_meta[edge[0].unique_id]:
                               meta_a = agent
-                              if meta_a not in self.schedule.keys():
-                                  print (meta_a)
-                                  print (self.metas[meta_a])
-                                  print ("issue")
                               break
-                          #add to schedule
-                          self.schedule[meta_a].add([edge[1]]) #metaagent add functoin
+                          
+                          self.metas[meta_a].add([edge[1]])
+                          #self.schedule[meta_a].add([edge[1]]) #metaagent add functoin
                           #add to reverse
                           self.reverse_meta[edge[1].unique_id].add(meta_a) #set add function 
                           #add to network
@@ -309,7 +309,8 @@ class ML_Mesa(RandomActivation):
             
         Critical Dynamics: 
             process must YIELD agent group
-            process must return list of agent objects      
+            process must return list of agent objects, with first agent being
+            the linked to all others
         
         '''
 
@@ -491,8 +492,8 @@ class ML_Mesa(RandomActivation):
     #
     ######################################################################
     
-    def net_schedule(self, link_type = None,\
-                     link_value = None, double = False, policy = None):
+    def net_schedule(self, link_type = None,link_value = None, \
+                     double = False, policy = None, group_net = False):
         '''
         Concept: Updates schedule specified by link data either type of 
         connection or value
@@ -516,19 +517,19 @@ class ML_Mesa(RandomActivation):
                     if type(link_value) == str:
                         if edge[2] == link_value:
                             metas.append((edge[0], edge[1]))
-                        elif edge[2] >= link_value: 
-                            metas.append((edge[0], edge[1]))
+                    elif edge[2] >= link_value: 
+                        metas.append((edge[0], edge[1]))
                     
            
             self.meta_iterate(metas, determine_id = "default", double= double,\
-                              policy = policy)
+                              policy = policy, group_net = group_net)
             
         
         else: 
             # Add all linked nodes to schedule
             metas = list(self.net.edges())
             self.meta_iterate(metas, determine_id = "default", double= double,\
-                              policy = policy)
+                              policy = policy, group_net = group_net)
             #active_list = []
             #for meta in metas: 
                 

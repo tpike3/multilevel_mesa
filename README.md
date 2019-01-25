@@ -38,7 +38,8 @@ As shown in figure 1, ML Mesa has two primary approaches for facilitating a mult
 
 The formation function of the explicit approach is ML_Mesa.form_meta and takes a user defined process which generates a list of agents. The user defined process provides the criteria for ML_Mesa.form_meta to iterate through the list of agents from the first agent in the list's perspective. This approach can be computationally expensive, but is necessary to allow for the accurate recreation of the network. The user identifies an agent or group of agents (the default is all agents in the ML_Mesa.\_agents dictionary) and then stipulates an evaluation process. From this process, a list of agents who meet the criteria is generated, which ML Mesa then links to the initial agent. As dictionaries cannot be manipulated during iteration users must use a *yield* versus the more common *return* function to pass the list of agents to the form_meta function. The function then creates a bilateral link list which in turn forms a meta-agent. 
 
-**User-Defined Formation Function**
+##### User-Defined Formation Function
+
     ```
     def form_meta(self, process, *args, determine_id = 'default', \
                   double = False, policy = None,  **kwargs):
@@ -50,7 +51,8 @@ The ML_Mesa.form_meta function requires one parameter which is the user specifie
 
 The dissolution function for the explicit approach (although it can be used interchangeably with the network approach) is ML_Mesa.reassess_meta. This function iterates through each meta-agent and then uses the user defined process to assess on whether or not an agent should still belong to the meta-agent. Similar to the ML_Mesa.form_meta this function requires a *yield* to provide the list of agents which should be removed and then proceeds to remove those agents while updating the appropriate managers. This function also ensures if the meta-agent fails to have a certain number of agents within the meta_agent that the meta-agent will also be removed. This minimum number of agents is the min_for_meta attribute of the ML Mesa instance and has a default setting of two. 
 
-**User-Defined Dissolution Function**
+##### User-Defined Dissolution Function
+
     ```
     def reassess_meta(self, process, *args, reintroduce = True, **kwargs):
     ```
@@ -60,9 +62,10 @@ The ML_Mesa.reassess_meta function requires one parameter, which is the process 
 
 ##### Network Defined Formation: ML_Mesa.net_schedule
 
-The formation function of the network approach is ML_Mesa.net_schedule and uses an undirected NetworkX graph object to assess what agents should form meta-agents. With an undirected graph and as indicated in figure one, there are three possibilities for assessing whether or not linked agents should be in the same meta-agents. First, simply by whether or not a link exists between the agents. Second, if a specific type of link exists. Third, if a link exists which has reached a certain value. For example in the SugarScape verification and validation discussed in the next section, one version forms a meta_agent if an agent and landscape cell are linked, in another version, the agents form a meta-agent if they have 10 or more trades between them. Although, NetworkX also offers the possibility of directed graphs and multi-graphs these options were not used for simplicity sake and because the dynamics of ABMs can account for the main aspects of these features. As NetworkX uses a dictionary structure to capture nodes and links, a multi-graph can be easily simulated by adding more link types along the edge, so a link may have the dictionary keys {family, tribe, job...} allowing for a link with multiple types similar to a multi-graph. The directed graph dynamic can also by achieved through agent interactions as the link attributes can dictate the direction of resources based on agent attributes. The one cost is users can not use the network evaluation functions in NetowrkX associated with multi-graphs and directed graphs. Using an undirected graph provides a leaner, more easily understood approach without loss of network dynamics. 
+The formation function of the network approach is ML_Mesa.net_schedule and uses an undirected NetworkX graph object to assess what agents should form meta-agents. With an undirected graph and as indicated in figure one, there are three possibilities for assessing whether or not linked agents should be in the same meta-agents. First, simply by whether or not a link exists between the agents. Second, if a specific type of link exists. Third, if a link exists which has reached a certain value. For example in the SugarScape verification and validation discussed in the next section, one version forms a meta_agent if an agent and landscape cell are linked, in another version, the agents form a meta-agent if they have 10 or more trades between them. Although, NetworkX also offers the possibility of directed graphs and multi-graphs these options were not used for simplicity sake and because the dynamics of ABMs can account for the main aspects of these features. As NetworkX uses a dictionary structure to capture nodes and links, a multi-graph can be easily simulated by adding more link types along the edge, so a link may have the dictionary keys {family, tribe, job...} allowing for a link with multiple types similar to a multi-graph. The directed graph dynamic can also be achieved through agent interactions as the link attributes can dictate the direction of resources based on agent attributes. The one cost is users can not use the network evaluation functions in NetowrkX associated with multi-graphs and directed graphs. Using an undirected graph provides a leaner, more easily understood approach without loss of network dynamics. 
 
-**Network Formation Function**
+##### Network Formation Function
+
     ``` 
     def net_schedule(self, link_type = None, link_value = None, double = False, policy = None):
     ```
@@ -73,7 +76,8 @@ The ML_Mesa.net_schedule function requires no parameters and will default to sim
 
 The ML_Mesa.reassess_net_schedule uses the same taxonomy of options as ML_Mesa.net_schedule. First, an agent can be removed based on the presence of a link, the presence of a specific link type and finally the presence of a specific link value. The function will also check to ensure the meta-agent still has the minimum number of agents to remain a meta-agent which is defaulted to two with ML_Mesa.min_for_meta attribute. 
 
-**Network Dissolution Function**
+##### Network Dissolution Function
+
     ```
     def reassess_net_schedule(self, link_type = None, link_value = None)
     ```
@@ -84,7 +88,8 @@ The dissolution function similar to the formation function requires no parameter
 
 As ML_Mesa replaces the normal schedule function of Mesa, it must also have the basic scheduling functions. These are the add and remove functions, which remain at the individual agent level but have a higher degree of complexity as agents must be kept in multiple managers to ensure agents they are being properly 'stepped' in the schedule or removed if the agent 'dies'. ML_ Mesa also replaces Mesa's step function. Its primary schedule is random activation, but this can be turned off for an ordered activation and a staged activation can be executed through the agent_type manager. A future extension of ML_Mesa would be to store different schedules based on different network configurations. This would save computation time so specific agent schedules would be created less often. For example, if one was recreating daily life of a population and the night and morning hours used one configuration, while the daytime hours would use a different configuration, each calling different behavior routines for the agents. 
 
-**Schedule Functions**
+##### Schedule Functions
+
     ```
     def add(self, agent, schedule = True, net = True)
 
