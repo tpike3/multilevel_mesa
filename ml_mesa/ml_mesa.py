@@ -20,11 +20,11 @@ The main areas for the ML_Mesa Class are:
         -- add
         -- remove
     --Explicit approach (line )
-        -- form_meta
-        --reassess_meta
+        -- form_group
+        --reassess_group
     --Core functions- steps and buffers (line 278)
         --const_buffer
-        --meta_buffer
+        --group_buffer
         --step
     --Network based approach (line)
         --net schedule with 3 options
@@ -42,7 +42,7 @@ import itertools
 
 class ML_Mesa(RandomActivation):
     
-    def __init__(self, model, min_for_meta = 2, group_to_net = False):
+    def __init__(self, model, min_for_group = 2, group_to_net = False):
         super().__init__(model)
         #Maintains master dictionary of all agents in model
         self._agents = OrderedDict()
@@ -52,16 +52,16 @@ class ML_Mesa(RandomActivation):
         self.agents_by_type = defaultdict(dict)
         #Dictionary of agents who are active for each time step
         self.schedule = OrderedDict()
-        #Minimum number of agent to eleminate a meta agent
-        self.min = min_for_meta
+        #Minimum number of agent to eleminate a group agent
+        self.min = min_for_group
         #Counter for Group Agent tracking
         self.id_counter = 0
         #Attribute for making hierarchies
         self.group_net = group_to_net
         #Ordered dictionary of group agents
-        self.metas = OrderedDict()
-        #Reverse dictionary og Agents to Groups by linktype to which they belong
-        self.reverse_meta = defaultdict(lambda: defaultdict(set))
+        self.groups = OrderedDict()
+        #Reverse dictionary of Agents to Groups by linktype to which they belong
+        self.reverse_groups = defaultdict(lambda: defaultdict(set))
         
     @property
     def agent_count(self):
@@ -78,7 +78,7 @@ class ML_Mesa(RandomActivation):
     def active_agent_count(self):
         '''
         Acts as an attribute of ML_Mesa Class
-        Provides number of meta agents in the schedule
+        Provides number of group agents in the schedule
         '''
         return len(self.schedule.keys())
     
@@ -90,8 +90,8 @@ class ML_Mesa(RandomActivation):
         
         group = None        
         
-        for item in self.reverse_meta[agent.unique_id][link_type]:
-            group = self.metas[item]
+        for item in self.reverse_groups[agent.unique_id][link_type]:
+            group = self.groups[item]
             break
                         
         return group
@@ -156,24 +156,24 @@ class ML_Mesa(RandomActivation):
             #remove from schedule
             del self.schedule[m]
         
-        #remove meta agent from all reverse_metas
-        for group_dicts in self.reverse_meta.values():
+        #remove group agent from all reverse_groups
+        for group_dicts in self.reverse_groups.values():
             group_dicts[group_type].discard(m)
         
         #is group part of larger group
-        if m in self.reverse_meta.keys():
+        if m in self.reverse_groups.keys():
             #identify super group
-            super_group = self.reverse_meta[m]
-            for groups in super_group.values():
+            super_group = self.reverse_groups[m]
+            for group_agents in super_group.values():
                 #produces a lists of sets of groups
-                for group in self.set_buffer(groups): 
-                    super_status, group_remove = self.metas[group].remove(m, self.min) 
+                for group in self.set_buffer(group_agents): 
+                    super_status, group_remove = self.groups[group].remove(m, self.min) 
                     if super_status != None: 
                         #remove super_group
                         self._remove_groups_recursion(group,group_remove)
                     
-        #remove form master meta
-        del self.metas[m]
+        #remove from master groups
+        del self.groups[m]
         #remove node is exists
         if m in self.net:
             self.net.remove_node(m)
@@ -199,21 +199,21 @@ class ML_Mesa(RandomActivation):
         del self.agents_by_type[agent_class][agent.unique_id]
         self.net.remove_node(agent)
         
-        if agent.unique_id in self.reverse_meta.keys():
-            meta = []
+        if agent.unique_id in self.reverse_groups.keys():
+            _groups = []
             #convert groups to which agent belongs to list
-            for group_type in self.reverse_meta[agent.unique_id].keys():
-                meta += list(self.reverse_meta[agent.unique_id][group_type])
+            for group_type in self.reverse_groups[agent.unique_id].keys():
+                _groups += list(self.reverse_groups[agent.unique_id][group_type])
                 
-            #delete agent from reverse_meta
-            del self.reverse_meta[agent.unique_id]
-            for m in meta: 
-                if m in self.metas.keys():
-                    if agent.unique_id in self.metas[m].sub_agents.keys():
-                        #remove agent form meta_agent
-                        meta_status, group_type = self.metas[m].remove(agent.unique_id, self.min)
+            #delete agent from reverse_group
+            del self.reverse_groups[agent.unique_id]
+            for m in _groups: 
+                if m in self.groups.keys():
+                    if agent.unique_id in self.groups[m].sub_agents.keys():
+                        #remove agent from group_agent
+                        group_status, group_type = self.groups[m].remove(agent.unique_id, self.min)
                         #if agent dies
-                        if meta_status != None:
+                        if group_status != None:
                             #Helper function to deal with groups within groups
                             self._remove_groups_recursion(m, group_type)
              
@@ -243,34 +243,34 @@ class ML_Mesa(RandomActivation):
         del self.agents_by_type[agent_class][agent.unique_id]
         self.net.remove_node(agent)
         
-        if agent.unique_id in self.reverse_meta.keys():
-            meta = []
+        if agent.unique_id in self.reverse_groups.keys():
+            _groups = []
             
             #convert groups to which agent belongs to list
-            for group_type in self.reverse_meta[agent.unique_id].keys():
-                meta += list(self.reverse_meta[agent.unique_id][group_type])
+            for group_type in self.reverse_groups[agent.unique_id].keys():
+               _groups += list(self.reverse_groups[agent.unique_id][group_type])
                         
-            #delete agent form reverse_meta
-            del self.reverse_meta[agent.unique_id]
-            for m in meta: 
-                if m in self.metas.keys():
-                    if agent.unique_id in self.metas[m].sub_agents.keys():
-                        #remove agent form meta_agent
-                        meta_status, group_type = self.metas[m].remove(agent.unique_id, self.min)
+            #delete agent form reverse_groups
+            del self.reverse_groups[agent.unique_id]
+            for m in _groups: 
+                if m in self.groups.keys():
+                    if agent.unique_id in self.groups[m].sub_agents.keys():
+                        #remove agent form group_agent
+                        group_status, group_type = self.groups[m].remove(agent.unique_id, self.min)
                         #if agent dies
-                        if meta_status != None:
+                        if group_status != None:
                             if m in self.schedule.keys():
                                 #remove fsom schedule
                                 del self.schedule[m]
-                            #remove meta agent from all reverse_metas
+                            #remove group agent from all reverse_groups
                             #get list of sub_agents in mets
-                            subs = list(self.metas[m].sub_agents.values())
+                            subs = list(self.groups[m].sub_agents.values())
                             #iterate through subs
                             for a in subs: 
                                 #get all associated links
-                                 self.reverse_meta[a][group_type].discard(m)
-                            #remove form master meta
-                            del self.metas[m]
+                                 self.reverse_groups[a][group_type].discard(m)
+                            #remove from master group
+                            del self.groups[m]
                             #remove node is exists
                             if m in self.net:
                                 self.net.remove_node(m)
@@ -305,11 +305,11 @@ class ML_Mesa(RandomActivation):
                 
     ########################################################################
     #
-    #                  Meta Helper Function
+    #                  Group Helper Function
     #
     ########################################################################
     
-    def meta_iterate(self, metas, determine_id, double, policy, group_net, \
+    def group_iterate(self, groups, determine_id, double, policy, group_net, \
                      link_type):
         '''
         Main Function of ML MEsa
@@ -327,18 +327,18 @@ class ML_Mesa(RandomActivation):
                 
         '''
         
-        for edge in metas:
+        for edge in groups:
             #create empty dictionary for sub_agents of specific link
-            meta2_dict = {}
+            group2_dict = {}
             #identify if the agents are part of common group
             group_intersect = \
-            self.reverse_meta[edge[0].unique_id][link_type].intersection\
-            (self.reverse_meta[edge[1].unique_id][link_type])
+            self.reverse_groups[edge[0].unique_id][link_type].intersection\
+            (self.reverse_groups[edge[1].unique_id][link_type])
             #identify if the agents are part of the specified common group type
             if group_intersect == set(): #no intersection
                #neither are part of a group and will create their own
-               if  self.reverse_meta[edge[0].unique_id][link_type] == set() and \
-               self.reverse_meta[edge[1].unique_id][link_type] == set(): #not part of meta_agent
+               if  self.reverse_groups[edge[0].unique_id][link_type] == set() and \
+               self.reverse_groups[edge[1].unique_id][link_type] == set(): #not part of group_agent
                    # create new Id
                    if determine_id == 'default': 
                        unique_id =  "group"+str(self.id_counter)
@@ -349,21 +349,21 @@ class ML_Mesa(RandomActivation):
                        self.id_counter += 1
                    else: 
                        unique_id = determine_id
-                   #create new meta agent        
-                   meta2_dict = {unique_id: dict((x.unique_id, x) for x in edge)}
+                   #create new group agent        
+                   group2_dict = {unique_id: dict((x.unique_id, x) for x in edge)}
                    
-                   ma = MetaAgent(unique_id, self.model, self._agents,\
-                          meta2_dict[unique_id], self.reverse_meta, self.min, \
+                   ma = GroupAgent(unique_id, self.model, self._agents,\
+                          group2_dict[unique_id], self.reverse_groups, self.min, \
                           policy, link_type)
                    ma.form_graph(edge)
                    # add to schedule
                    self.schedule[ma.unique_id] = ma
                    #add to management structures
-                   #Metas ordereddict
-                   self.metas[ma.unique_id] = ma
-                   #reverse_meta references
-                   self.reverse_meta[edge[0].unique_id][link_type].add(ma.unique_id)
-                   self.reverse_meta[edge[1].unique_id][link_type].add(ma.unique_id)
+                   #Groups ordereddict
+                   self.groups[ma.unique_id] = ma
+                   #reverse_groups references
+                   self.reverse_groups[edge[0].unique_id][link_type].add(ma.unique_id)
+                   self.reverse_groups[edge[1].unique_id][link_type].add(ma.unique_id)
                    #network if not there
                    if self.net.has_edge(edge[0], edge[1]) == False:
                        self.add_link([edge])
@@ -375,19 +375,19 @@ class ML_Mesa(RandomActivation):
                                del self.schedule[edge[1].unique_id]
                    if group_net == True: 
                        self.net.add_node(ma)
-               #one is part of a meta_agent so the other will join
-               elif self.reverse_meta[edge[0].unique_id][link_type] == set() or \
-               self.reverse_meta[edge[1].unique_id][link_type] == set():  
-                  if self.reverse_meta[edge[0].unique_id][link_type] == set():
-                      #get the meta_agent
-                      for agent in self.reverse_meta[edge[1].unique_id][link_type]:
-                          meta_a = agent
+               #one is part of a group_agent so the other will join
+               elif self.reverse_groups[edge[0].unique_id][link_type] == set() or \
+               self.reverse_groups[edge[1].unique_id][link_type] == set():  
+                  if self.reverse_groups[edge[0].unique_id][link_type] == set():
+                      #get the group_agent
+                      for agent in self.reverse_groups[edge[1].unique_id][link_type]:
+                          group_a = agent
                           break
                 
-                      self.metas[meta_a].add([edge[0]])
-                      #self.schedule[meta_a].add([edge[0]]) #MetaAgent add function
+                      self.groups[group_a].add([edge[0]]) #GroupAgent add function
+                     
                       #add to reverse
-                      self.reverse_meta[edge[0].unique_id][link_type].add(meta_a) #set add function
+                      self.reverse_groups[edge[0].unique_id][link_type].add(group_a) #set add function
                       #add to network
                       self.add_link([edge])
                       #delete from schedule
@@ -395,38 +395,38 @@ class ML_Mesa(RandomActivation):
                         if edge[0].unique_id in self.schedule.keys():
                                 del self.schedule[edge[0].unique_id]
                   else: 
-                      for agent in self.reverse_meta[edge[0].unique_id][link_type]:
-                          meta_a = agent
+                      for agent in self.reverse_groups[edge[0].unique_id][link_type]:
+                          group_a = agent
                           break
                       
-                      self.metas[meta_a].add([edge[1]])
-                      #self.schedule[meta_a].add([edge[1]]) #metaagent add functoin
+                      self.groups[group_a].add([edge[1]]) #GroupAgent add function
+                      
                       #add to reverse
-                      self.reverse_meta[edge[1].unique_id][link_type].add(meta_a) #set add function 
+                      self.reverse_groups[edge[1].unique_id][link_type].add(group_a) #set add function 
                       #add to network
                       self.add_link([edge])
                       #delete from schedule
                       if double == False: 
                         if edge[1].unique_id in self.schedule.keys(): 
                                 del self.schedule[edge[1].unique_id]
-               #both are part of a meta_agent and so will maintain a link
+               #both are part of a group_agent and so will maintain a link
                else: 
                   #make sure there is a link between agents
                   self.add_link([edge])
-            #both are part of the same metaagent
+            #both are part of the same groupagent
             else: 
                 pass
 
     
     #########################################################################
     #
-    #         Explicit Approach - User Directed MetaAgent Creation
+    #         Explicit Approach - User Directed GroupAgent Creation
     #
     ########################################################################    
     
     def group_remove(self, agents):
         '''
-        Helper function for form_meta
+        Helper function for form_group
         
         Concept:
             Groups agents who should form a group together in a list os tuples
@@ -447,13 +447,13 @@ class ML_Mesa(RandomActivation):
     
         return edges
     
-    def form_meta(self, process, *args, determine_id = 'default', \
+    def form_group(self, process, *args, determine_id = 'default', \
                       double = False, policy = None, group_type = None,\
                       **kwargs):
         '''
         Concept: Function works with a user defined process to take in lists of 
-        agents who should be gorup together and runs them through the meta_agent 
-        process making sure they are still alive and not duplicating meta_agents
+        agents who should be gorup together and runs them through the group_agent 
+        process making sure they are still alive and not duplicating group_agents
         
         Helper function: group_remove(self) checks to see if agent is still 
         alive
@@ -465,7 +465,7 @@ class ML_Mesa(RandomActivation):
             determine_id = default means the package will give an id
             double = True or False if agents should be stepped twice during 
             process
-            policy = pass in meta_agent policy
+            policy = pass in group_agent policy
             
         Critical Dynamics: 
             process must YIELD agent group
@@ -480,24 +480,24 @@ class ML_Mesa(RandomActivation):
                 #remove dead agents if any    
                 edges = self.group_remove(result)
                 if edges != None: 
-                    #create meta_agents
-                    self.meta_iterate(edges, determine_id, double, policy, 
+                    #create group_agents
+                    self.group_iterate(edges, determine_id, double, policy, 
                                       self.group_net, link_type = group_type)
             else: 
                 edges= self.group_remove(result[1])
-                #create meta_agents
+                #create group_agents
                 if edges != None: 
-                    #create meta_agents
-                    self.meta_iterate(edges, result[0], double, policy, \
+                    #create group_agents
+                    self.group_iterate(edges, result[0], double, policy, \
                                       self.group_net, link_type = group_type)
          
             
                    
    
-    def reassess_meta(self, process, reintroduce = True, group_type = None, **kwargs):
+    def reassess_group(self, process, reintroduce = True, group_type = None, **kwargs):
         
         '''
-        Purpose: Examine a meta agent to remove or add agents and delete if 
+        Purpose: Examine a group agent to remove or add agents and delete if 
         empty
         
         Params: 
@@ -505,23 +505,23 @@ class ML_Mesa(RandomActivation):
                        module
             args - arguments for process function
             shuffled - True or False; do agents need to be in random order
-            min_for_meta - one more than the smallest number of subagents 
-            before a metaagent is deleted
+            min_for_group - one more than the smallest number of subagents 
+            before a groupagent is deleted
             
         Critical Dynamics: 
             - process must return 2 agents who are no longer linked
-            - meta-agents then receives list of agents to remove
-            - if meta-agent has no subagents it is removed from schedule
+            - group-agents then receives list of agents to remove
+            - if group-agent has no subagents it is removed from schedule
         
         '''
                 
-        for meta_agent in self.reassess_buffer(): 
+        for group_agent in self.reassess_buffer(): 
             
             #master list of agents to remove
             subs_to_remove = []
              
             #must receive list of tuples of connected agents
-            peel_list = process(meta_agent, **kwargs)
+            peel_list = process(group_agent, **kwargs)
             if peel_list != None: 
                  #allows process output to be two agents or 
                  #tuple of two agents
@@ -530,20 +530,19 @@ class ML_Mesa(RandomActivation):
                      
                      self.net.remove_edge(self._agents[edges[0].unique_id],\
                                              self._agents[edges[1].unique_id])
-                     #Remove from reverse_meta, uses set remove function
+                     #Remove from reverse_group, uses set remove function
                      
                      
-                     self.reverse_meta[edges[0].unique_id][group_type].remove(meta_agent.unique_id)
-                     self.reverse_meta[edges[1].unique_id][group_type].remove(meta_agent.unique_id)
+                     self.reverse_groups[edges[0].unique_id][group_type].remove(group_agent.unique_id)
+                     self.reverse_groups[edges[1].unique_id][group_type].remove(group_agent.unique_id)
                  elif len(peel_list) > 2: 
-                     #Be Default all agents in a meta_agent should be
+                     #Be Default all agents in a group_agent should be
                      #connected
                      edges = list(itertools.combinations(peel_list, 2))
                      self.net.remove_edges_from(edges)
                      for edge in edges: 
-                         
-                            self.reverse_meta[edges[0].unique_id].remove(meta_agent.unique_id)
-                            self.reverse_meta[edges[1].unique_id].remove(meta_agent.unique_id)       
+                         self.reverse_groups[edges[0].unique_id].remove(group_agent.unique_id)
+                         self.reverse_groups[edges[1].unique_id].remove(group_agent.unique_id)       
                  else: 
                      raise Exception("Removing subagents from a group", \
                                      "requires either 2 agents ", 
@@ -559,16 +558,17 @@ class ML_Mesa(RandomActivation):
                 for agent in peel_list: 
                     self.add(agent, schedule = True)
             
-            # call function to remove metaagents if necessary
-            meta_status, group_type = meta_agent.remove(subs_to_remove, self.min)
-            #Remove meta-agents with no sub_agents
-            if meta_status != None: 
-                del self.schedule[meta_agent.unique_id]
-                del self.metas[meta_agent.unique_id]
-                              
+            # call function to remove groupagents if necessary
+            group_status, group_type = group_agent.remove(subs_to_remove, self.min)
+            #Remove group-agents with no sub_agents
+            if group_status != None: 
+                #remove from schedule
+                if group_agent.unique_id in self.schedule.keys(): 
+                    del self.schedule[group_agent.unique_id]
+                del self.groups[group_agent.unique_id]
                 #iterate through subs
                 for a in subs_to_remove: 
-                   self.reverse_meta[a][group_type].discard(meta_agent.unique_id)
+                   self.reverse_groups[a][group_type].discard(group_agent.unique_id)
             
         
     #########################################################
@@ -592,13 +592,13 @@ class ML_Mesa(RandomActivation):
     
     def reassess_buffer(self):
         '''
-        Helper function for reassess functions to manipulate meta dictionary
+        Helper function for reassess functions to manipulate groups dictionary
         '''
                 
-        meta_keys = list(self.metas.keys())
+        group_keys = list(self.groups.keys())
     
-        for key in meta_keys: 
-            yield self.metas[key]
+        for key in group_keys: 
+            yield self.groups[key]
     
     def const_buffer(self, agent_type):
         '''
@@ -615,7 +615,7 @@ class ML_Mesa(RandomActivation):
                   yield self._agents[agent]    
                 
     
-    def meta_buffer(self, shuffled):
+    def group_buffer(self, shuffled):
         '''
         Purpose: Buffer for main agents to prevent issues of data structure
         changing during execution
@@ -624,12 +624,12 @@ class ML_Mesa(RandomActivation):
         advantages
         '''
                 
-        meta_keys = list(self.schedule.keys())
+        group_keys = list(self.schedule.keys())
               
         if shuffled: 
-            self.model.random.shuffle(meta_keys)
+            self.model.random.shuffle(group_keys)
         
-        for key in meta_keys: 
+        for key in group_keys: 
             if key in self.schedule.keys(): 
                 yield self.schedule[key]
     
@@ -643,19 +643,19 @@ class ML_Mesa(RandomActivation):
             const_update: whether agents are updated once per step regardless
         '''                
         
-        for agent in self.meta_buffer(shuffled):
+        for agent in self.group_buffer(shuffled):
             #currently a random activation nested within a random activation 
-            if agent.type != 'meta' and type(agent) != const_update: 
+            if agent.type != 'group' and type(agent) != const_update: 
                 agent.step()
             else: 
                 if by_type == False: 
-                    agent.meta_step()
+                    agent.group_step()
                 else: 
                     #type is list of agents order
                     if const_update == False: 
-                        agent.meta_step(by_type)
+                        agent.group_step(by_type)
                     else: 
-                        agent.meta_step(by_type, const_update)
+                        agent.group_step(by_type, const_update)
                 
         if const_update != False: 
             for agent in self.const_buffer(const_update):
@@ -664,11 +664,11 @@ class ML_Mesa(RandomActivation):
         
     ######################################################################
     #
-    #         Networked Based Meta-Agent Creation
+    #         Networked Based Group-Agent Creation
     #
     ######################################################################
     
-    def net_schedule(self, link_type = None,link_value = None, \
+    def net_group(self, link_type = None,link_value = None, \
                      double = False, policy = None):
         '''
         Concept: Updates schedule specified by link data either type of 
@@ -683,38 +683,38 @@ class ML_Mesa(RandomActivation):
         
         if link_type != None: 
             if link_value == None: 
-                metas = []
+                _groups = []
                 for edge in self.net.edges.data(link_type): 
-                    metas.append((edge[0], edge[1]))
+                    _groups.append((edge[0], edge[1]))
                 determine_id = str(link_type)
 
             else: 
-                metas = []
+                _groups = []
                 for edge in self.net.edges.data(link_type): 
                     if type(link_value) == str:
                         if edge[2] == link_value:
-                            metas.append((edge[0], edge[1]))
+                            _groups.append((edge[0], edge[1]))
                     elif edge[2] >= link_value: 
-                        metas.append((edge[0], edge[1]))
+                        _groups.append((edge[0], edge[1]))
                 determine_id = str(link_type)+"_"+str(link_value)        
                     
            
-            self.meta_iterate(metas, determine_id, double= double,\
+            self.group_iterate(_groups, determine_id, double= double,\
                               policy = policy, group_net = self.group_net,\
                               link_type = link_type)
             
         
         else: 
             # Add all linked nodes to schedule
-            metas = list(self.net.edges())
-            self.meta_iterate(metas, determine_id = "default", double= double,\
+            _groups = list(self.net.edges())
+            self.group_iterate(_groups, determine_id = "default", double= double,\
                               policy = policy, group_net = self.group_net, \
                               link_type = link_type)
             #active_list = []
-            #for meta in metas: 
+            #for group in groups: 
                 
         
-    def reassess_net_schedule(self, link_type = None,\
+    def reassess_net_group(self, link_type = None,\
                  link_value = None,):
         '''
         Concept: Updates group specified by link data either type of 
@@ -727,7 +727,7 @@ class ML_Mesa(RandomActivation):
           
         '''
         
-        #remove metas who are no longer linked
+        #remove groups who are no longer linked
         if link_type != None: 
             if link_value == None: 
                 group_type = str(link_type)
@@ -736,22 +736,29 @@ class ML_Mesa(RandomActivation):
         else:
             group_type = link_type
         
-        for meta_agent in self.reassess_buffer(): 
-            for link in meta_agent.edge_buffer(link_type, link_value):
+        for group_agent in self.reassess_buffer(): 
+            for link in group_agent.edge_buffer(link_type, link_value):
                 if self.net.has_edge(link[0], link[1])== False:
-                    if link[0] in self._agents.values():
-                        self.reverse_meta[link[0].unique_id][group_type].remove(meta_agent.unique_id)
-                    if link[1] in self._agents.values():
-                        self.reverse_meta[link[1].unique_id][group_type].remove(meta_agent.unique_id)
-                    meta_status = meta_agent.remove([link[0].unique_id, link[1].unique_id], self.min)
-                    #add back into schedule
-                    for agent in link:
-                        if agent in self._agents.values():
-                            self.add(agent, schedule = True)
-                    #Remove meta-agents with no sub_agents
-                    if meta_status != None: 
-                        del self.schedule[meta_agent.unique_id]
-                        del self.metas[meta_agent.unique_id]
+                    #remove from reverse group dictionary
+                    self.reverse_groups[link[0].unique_id][group_type].remove(group_agent.unique_id)
+                    self.reverse_groups[link[1].unique_id][group_type].remove(group_agent.unique_id)
+                    #see if group agent should still exist
+                    group_status, group_type2 = group_agent.remove([link[0].unique_id, link[1].unique_id], self.min)
+                                        
+                    #Remove group-agents with no sub_agents
+                    if group_status != None: 
+                        #add individual agent back in schedule
+                        for agent in link:
+                            if agent in self._agents.values():
+                                self.add(agent, schedule = True)
+                        #remove from schedule
+                        if group_agent.unique_id in self.schedule.keys():
+                            del self.schedule[group_agent.unique_id]
+                        #remove from group dictionary
+                        del self.groups[group_agent.unique_id]
+                        #iterate through subs and remove from reverse group
+                        for a in link: 
+                           self.reverse_groups[a][group_type].discard(group_agent.unique_id)
                         
                  
     #TODO make easier to remove based on key, add buffer?
@@ -788,13 +795,13 @@ class ML_Mesa(RandomActivation):
 ###################################################################
 from mesa import Agent
 
-class MetaAgent(Agent, ML_Mesa):
+class GroupAgent(Agent, ML_Mesa):
     '''
-    MetaAgent
+    GroupAgent
     
-    Class which provides MetaAgents functions.
-    This porvides the ability to manage the MetaAgents which form and bring in 
-    meta_agent functions
+    Class which provides GroupAgents functions.
+    This porvides the ability to manage the GroupAgents which form and bring in 
+    group_agent functions
     
     There atre two main area of functions
      Helper functions:
@@ -806,26 +813,26 @@ class MetaAgent(Agent, ML_Mesa):
          -- agent_buffer
          -- remove_buffer
          -- agent_by_type_buffer
-         -- meta_step
+         -- group_step
          -- step
          --step_by_type
     '''
     
-    def __init__(self, unique_id, model, agents, sub_agents, reverse_meta, \
-                 min_for_meta, policy = None, link_type = None, active = True):
+    def __init__(self, unique_id, model, agents, sub_agents, reverse_groups, \
+                 min_for_group, policy = None, link_type = None, active = True):
         super().__init__(unique_id, model)
         self._agents = agents 
-        self.reverse_meta = reverse_meta
+        self.reverse_groups = reverse_groups
         #sub_agents is dictionary {unique_id:agent_object}
         self.sub_agents =sub_agents
         self.subs_by_type = self.make_types(sub_agents)
         self.sub_net = nx.Graph()
-        self.min_for_meta = min_for_meta
+        self.min_for_group = min_for_group
         self.policy = self.get_policy(policy)
         self.active = active
         self.group_type = link_type
-        self.type = 'meta'
-        self.__str__ = 'meta'
+        self.type = 'group'
+        self.__str__ = 'group'
     
    
     def get_policy(self, policy):
@@ -873,7 +880,7 @@ class MetaAgent(Agent, ML_Mesa):
            
     def add(self, agents):
         '''
-        Concept - Allows agent(s) to be added to existing meta_agent
+        Concept - Allows agent(s) to be added to existing group_agent
         
         Params: 
             agents - list of agent objects
@@ -883,18 +890,18 @@ class MetaAgent(Agent, ML_Mesa):
                 self.sub_agents[agent.unique_id] = agent
                 self.sub_net.add_node(agent)
                 self.subs_by_type[type(agent)][agent.unique_id] = agent
-                self.reverse_meta[agent.unique_id][self.group_type].add(self.unique_id)
+                self.reverse_groups[agent.unique_id][self.group_type].add(self.unique_id)
                 for agents in self.sub_agents.values(): 
                     self.sub_net.add_edge(agent, agents)
                     
     
-    def remove(self,subs_to_remove, min_for_meta, reintroduce = True):
+    def remove(self,subs_to_remove, min_for_group, reintroduce = True):
         '''
-        Concept - Allows agents to be removed form existing meta-agent
+        Concept - Allows agents to be removed form existing group-agent
         
         Params: 
             - subs_to_remove list of agent objects
-            - min_for_meta -attribute of ML_Mesa class which determines
+            - min_for_group -attribute of ML_Mesa class which determines
             how many agents for a minum agent default is 2
         '''       
         
@@ -908,14 +915,14 @@ class MetaAgent(Agent, ML_Mesa):
             self.sub_net.remove_node(agent)
             del self.subs_by_type[type(agent)][agent.unique_id]
         
-        if len(self.sub_agents.keys()) < min_for_meta:
+        if len(self.sub_agents.keys()) < min_for_group:
             #Place agent back in schedule
             if reintroduce == True: 
                 for agent in self.sub_agents.values():
                     #Mkae sure agents are still alive
                     if agent.unique_id in self._agents.keys():
                         self.model.ml.schedule[agent.unique_id] = agent
-                        self.reverse_meta[agent.unique_id][self.group_type].discard(self.unique_id)
+                        self.reverse_groups[agent.unique_id][self.group_type].discard(self.unique_id)
             #must return group_type to get right dictionary in reverse_groups
             return "died", self.group_type
         else:         
@@ -942,20 +949,22 @@ class MetaAgent(Agent, ML_Mesa):
         
         if link_type != None: 
             if link_value == None: 
-                metas = []
+                _groups = []
                 for edge in self.sub_net.edges.data(link_type): 
-                    metas.append((edge[0], edge[1]))
+                    _groups.append((edge[0], edge[1]))
             else: 
-                metas = []
+                _groups = []
                 for edge in self.sub_net.edges.data(link_type): 
+                    #for string qualifier
                     if edge[2] != link_value:
-                            metas.append((edge[0], edge[1]))
+                            _groups.append((edge[0], edge[1]))
+                    #for value qualifier
                     elif edge[2] <= link_value: 
-                            metas.append((edge[0], edge[1]))
+                            _groups.append((edge[0], edge[1]))
         else: 
-            metas = list(self.sub_net.edges())               
+            _groups = list(self.sub_net.edges())               
         
-        for edge in metas: 
+        for edge in _groups: 
             yield edge
     
     
@@ -1009,9 +1018,9 @@ class MetaAgent(Agent, ML_Mesa):
             yield self.sub_agents[key]
       
     
-    def meta_step(self, by_type = False, const_update = False):
+    def group_step(self, by_type = False, const_update = False):
         '''
-        Purpose: Exectue step function of meta-agent and subagents
+        Purpose: Exectue step function of group-agent and subagents
         
         Params: 
             by_type: either False or [list] indicating type of agents to execute
@@ -1043,12 +1052,12 @@ class MetaAgent(Agent, ML_Mesa):
         
          
         for agent in self.agent_buffer(shuffled):
-            if hasattr(agent, "type") and agent.type == 'meta':   
-                agent.meta_step()
+            if hasattr(agent, "type") and agent.type == 'group':   
+                agent.group_step()
             else:
                 #necessary for agent ghost who have not yet been removed from
-                #meta_agent but still allive
-                if len(self.sub_agents.values()) < self.min_for_meta:
+                #group_agent but still allive
+                if len(self.sub_agents.values()) < self.min_for_group:
                     agent.step()
                 else:                    
                     policy.step(agent)
@@ -1057,12 +1066,12 @@ class MetaAgent(Agent, ML_Mesa):
     
     def step(self, shuffled=True):
         '''
-        Concept: Step process for sub agents within active meta agent
+        Concept: Step process for sub agents within active group agent
         '''
         
         for agent in self.agent_buffer(shuffled):
-            if hasattr(agent, "type") and agent.type == 'meta':
-                self.meta_step()
+            if hasattr(agent, "type") and agent.type == 'group':
+                self.group_step()
             else:
                 if agent.unique_id in self._agents.keys(): 
                     agent.step()
@@ -1071,13 +1080,13 @@ class MetaAgent(Agent, ML_Mesa):
     def step_by_type(self, agent_type, shuffled = True):
         
         '''
-        Concept: Step process for sub agents within active meta agent by 
+        Concept: Step process for sub agents within active group agent by 
         type
         '''
         
         for agent in self.agent_by_type_buffer(agent_type, shuffled):
-            if hasattr(agent, "type") and agent.type == 'meta':
-                self.meta_step()
+            if hasattr(agent, "type") and agent.type == 'group':
+                self.group_step()
             else:
                 if agent.unique_id in self._agents.keys(): 
                     agent.step()
