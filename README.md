@@ -18,6 +18,12 @@ ML Mesa requires
 
     pip install ml_mesa
 
+## Examples of Multi-Level Mesa
+
+    Examples of multi_level_mesa are available at [Sugarscape Models]: https://github.com/tpike3/SugarScape
+
+    These examples are various instantiations of the Sugar and Spice trading model described in Chapter 4 of *Growing Artificial Societies* by ROb Axtell and Joshua Epstein.   
+
 ### Creating an ML Mesa Instance and the ML Mesa Managers
 
 Creating an instance of ML Mesa requires no parameters, and initiates one attribute and six managers. 

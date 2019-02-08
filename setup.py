@@ -7,11 +7,6 @@ from setuptools import setup, find_packages
 from codecs import open
 
 
-#get version from init file
-version = ''
-with open('ml_mesa/__init__.py', 'r') as fd:
-    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-                        fd.read(), re.MULTILINE).group(1)
 
 #get the readme file for the long description below--optional
 with open('README.md', 'rb', encoding='utf-8') as f:
@@ -20,7 +15,7 @@ with open('README.md', 'rb', encoding='utf-8') as f:
 # see https://github.com/pypa/sampleproject/blob/master/setup.py for explanation of each parameter and links
 setup(
     name='ml_mesa',
-    version=version,
+    version='0.0.2',
     description="Provides Extension module to Mesa to allow for Heirarhcies and Modules of Agents",
     long_description=readme,
     url='https://github.com/tpike3/ml_mesa',
