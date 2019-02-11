@@ -40,7 +40,7 @@ import networkx as nx
 from mesa.time import RandomActivation
 import itertools
 
-class ML_Mesa(RandomActivation):
+class MultiLevel_Mesa(RandomActivation):
     
     def __init__(self, model, min_for_group = 2, group_to_net = False):
         super().__init__(model)
@@ -795,7 +795,7 @@ class ML_Mesa(RandomActivation):
 ###################################################################
 from mesa import Agent
 
-class GroupAgent(Agent, ML_Mesa):
+class GroupAgent(Agent, MultiLevel_Mesa):
     '''
     GroupAgent
     

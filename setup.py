@@ -14,8 +14,8 @@ with open('README.md', 'rb', encoding='utf-8') as f:
 
 # see https://github.com/pypa/sampleproject/blob/master/setup.py for explanation of each parameter and links
 setup(
-    name='ml_mesa',
-    version='0.0.2',
+    name='multilevel_mesa',
+    version='0.0.1',
     description="Provides Extension module to Mesa to allow for Heirarhcies and Modules of Agents",
     long_description=readme,
     url='https://github.com/tpike3/ml_mesa',
@@ -33,7 +33,7 @@ setup(
         'Natural Language :: English',
     ],
     keywords='agent based modeling model ABM simulation multi-agent coaltion game theory',
-    packages = ["ml_mesa"],
+    packages = ["multilevel_mesa"],
     #for more elaborate projects with directories of files such as tests etc
     install_requires=['networkx', "mesa"]
 )
