@@ -4,7 +4,7 @@ Multi-level Mesa is a library which supports Python's Agent Based Modeling Libra
 
 Multi-level Mesa has three main components. First, a collection of managers which tracks the agents, the modules of agents (groups), the network of agents, and agents who belong to an existing group, and the schedule. Second, a series of functions which provides the user different options to form groups or dissolve them. Third, a group class which allows for the inclusion of different policies, manages the behavior and status of the group, and implicitly produces hierarchies within the complex system. (Figure 1)
 
-![Multi-level Mesa Schematic](\multilevel_mesa\picture\MultiLevel_Mesa.png)
+![Multi-level Mesa Schematic](https://github.com/tpike3/ml_mesa/blob/master/multilevel_mesa/picture/MultiLevel_Mesa%20Schematic.png)
 **Figure 1**
 
 ## Requirements
@@ -20,7 +20,7 @@ Multi-level Mesa requires
 
 ## Examples of Multi-Level Mesa
 
-Examples of multilevel_mesa are available at [Sugarscape Models]: https://github.com/tpike3/SugarScape
+Examples of multilevel_mesa are available at [Sugarscape Models]:https://github.com/tpike3/SugarScape
 
 These examples are various instantiations of the Sugar and Spice trading model described in Chapter 4 of *Growing Artificial Societies* by ROb Axtell and Joshua Epstein.   
 
