@@ -28,6 +28,7 @@ These examples are various instantiations of the Sugar and Spice trading model d
 
 Creating an instance of Multi-level Mesa requires no parameters, and initiates one attribute and six managers. 
 
+### Example Instance and Use
     # import with Mesa
     from mesa import Model
     import multilevel_mesa as mlm
@@ -46,7 +47,8 @@ Creating an instance of Multi-level Mesa requires no parameters, and initiates o
         def step(): 
 
             #specify criteria for group formation
-            self.ml.net_group(link_type = <some link type to form a group>, link_value = <some link value threshold to from a group> )
+            self.ml.net_group(link_type = <some link type to form a group>,\
+                        link_value = <some link value threshold to form a group>)
             
             #step the groups and agents
             self.ml.step()
