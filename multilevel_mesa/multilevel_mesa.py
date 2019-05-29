@@ -19,14 +19,14 @@ The main areas for the ML_Mesa Class are:
     --Granular agent functions (line 70)
         -- add
         -- remove
-    --Explicit approach (line )
+    --Explicit approach (line 422 )
         -- form_group
         --reassess_group
     --Core functions- steps and buffers (line 278)
         --const_buffer
         --group_buffer
         --step
-    --Network based approach (line)
+    --Network based approach (line 671)
         --net schedule with 3 options
             1- link
             2- link type
@@ -312,13 +312,13 @@ class MultiLevel_Mesa(RandomActivation):
     def group_iterate(self, groups, determine_id, double, policy, group_net, \
                      link_type):
         '''
-        Main Function of ML MEsa
+        Main Function of ML Mesa
         
         Parameters: 
             groups = list of bilateral links to for Group
-            determine_id: paraetmer ot pass in unique_id for group agent
-            double: True of False- remove agent form schedule
-            policy: object of gorup polcies toward agents
+            determine_id: parameter to pass in unique_id for group agent
+            double: True of False- remove agent from schedule
+            policy: object of group policies toward agents
             group_net: whether group can form more hierarchies
             link_type: type of link category to which group belongs
             
@@ -452,7 +452,7 @@ class MultiLevel_Mesa(RandomActivation):
                       **kwargs):
         '''
         Concept: Function works with a user defined process to take in lists of 
-        agents who should be gorup together and runs them through the group_agent 
+        agents who should be grouped together and runs them through the group_agent 
         process making sure they are still alive and not duplicating group_agents
         
         Helper function: group_remove(self) checks to see if agent is still 
@@ -777,7 +777,7 @@ class MultiLevel_Mesa(RandomActivation):
         
     def remove_link(self, agents):
         '''      
-        Remove links to master materowks based on agent intiatiation
+        Remove links to master network based on agent initiatiation
         
         Params: 
             agents - list of agent objects
@@ -803,7 +803,7 @@ class GroupAgent(Agent, MultiLevel_Mesa):
     This porvides the ability to manage the GroupAgents which form and bring in 
     group_agent functions
     
-    There atre two main area of functions
+    There are two main area of functions
      Helper functions:
          -- make_types
          -- form_graph
