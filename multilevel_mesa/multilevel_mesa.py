@@ -37,13 +37,14 @@ The main areas for the ML_Mesa Class are:
 
 from collections import OrderedDict, defaultdict
 import networkx as nx
-from mesa.time import RandomActivation
+#from mesa.time import BaseScheduler
 import itertools
 
-class MultiLevel_Mesa(RandomActivation):
+class MultiLevel_Mesa(object):
     
     def __init__(self, model, min_for_group = 2, group_to_net = False):
-        super().__init__(model)
+        #super().__init__(model)
+        self.model = model
         #Maintains master dictionary of all agents in model
         self._agents = OrderedDict()
         #Maintains master network of all agents in model
@@ -62,7 +63,9 @@ class MultiLevel_Mesa(RandomActivation):
         self.groups = OrderedDict()
         #Reverse dictionary of Agents to Groups by linktype to which they belong
         self.reverse_groups = defaultdict(lambda: defaultdict(set))
-        
+
+
+
     @property
     def agent_count(self):
         '''
@@ -81,7 +84,12 @@ class MultiLevel_Mesa(RandomActivation):
         Provides number of group agents in the schedule
         '''
         return len(self.schedule.keys())
-    
+
+    @property
+    def agents(self):
+        return list(self.schedule.values())
+
+
     def get_agent_group(self, agent, link_type):
         '''
         Function to make easier for users to get agent group
@@ -309,7 +317,7 @@ class MultiLevel_Mesa(RandomActivation):
     #
     ########################################################################
     
-    def group_iterate(self, groups, determine_id, double, policy, group_net, \
+    def group_iterate(self, groups, determine_id, double, policy, group_net,
                      link_type):
         '''
         Main Function of ML Mesa
@@ -352,8 +360,8 @@ class MultiLevel_Mesa(RandomActivation):
                    #create new group agent        
                    group2_dict = {unique_id: dict((x.unique_id, x) for x in edge)}
                    
-                   ma = GroupAgent(unique_id, self.model, self._agents,\
-                          group2_dict[unique_id], self.reverse_groups, self.min, \
+                   ma = GroupAgent(unique_id, self.model, self._agents,
+                          group2_dict[unique_id], self.reverse_groups, self.min,
                           policy, link_type)
                    ma.form_graph(edge)
                    # add to schedule
@@ -447,8 +455,8 @@ class MultiLevel_Mesa(RandomActivation):
     
         return edges
     
-    def form_group(self, process, *args, determine_id = 'default', \
-                      double = False, policy = None, group_type = None,\
+    def form_group(self, process, *args, determine_id = 'default',
+                      double = False, policy = None, group_type = None,
                       **kwargs):
         '''
         Concept: Function works with a user defined process to take in lists of 
@@ -544,7 +552,7 @@ class MultiLevel_Mesa(RandomActivation):
                          self.reverse_groups[edges[0].unique_id].remove(group_agent.unique_id)
                          self.reverse_groups[edges[1].unique_id].remove(group_agent.unique_id)       
                  else: 
-                     raise Exception("Removing subagents from a group", \
+                     raise Exception("Removing subagents from a group",
                                      "requires either 2 agents ", 
                                      "or a list of agents. ",)
                     
@@ -668,7 +676,7 @@ class MultiLevel_Mesa(RandomActivation):
     #
     ######################################################################
     
-    def net_group(self, link_type = None,link_value = None, \
+    def net_group(self, link_type = None,link_value = None,
                      double = False, policy = None):
         '''
         Concept: Updates schedule specified by link data either type of 
@@ -699,22 +707,22 @@ class MultiLevel_Mesa(RandomActivation):
                 determine_id = str(link_type)+"_"+str(link_value)        
                     
            
-            self.group_iterate(_groups, determine_id, double= double,\
-                              policy = policy, group_net = self.group_net,\
+            self.group_iterate(_groups, determine_id, double= double,
+                              policy = policy, group_net = self.group_net,
                               link_type = link_type)
             
         
         else: 
             # Add all linked nodes to schedule
             _groups = list(self.net.edges())
-            self.group_iterate(_groups, determine_id = "default", double= double,\
-                              policy = policy, group_net = self.group_net, \
+            self.group_iterate(_groups, determine_id = "default", double= double,
+                              policy = policy, group_net = self.group_net,
                               link_type = link_type)
             #active_list = []
             #for group in groups: 
                 
         
-    def reassess_net_group(self, link_type = None,\
+    def reassess_net_group(self, link_type = None,
                  link_value = None,):
         '''
         Concept: Updates group specified by link data either type of 
@@ -818,7 +826,7 @@ class GroupAgent(Agent, MultiLevel_Mesa):
          --step_by_type
     '''
     
-    def __init__(self, unique_id, model, agents, sub_agents, reverse_groups, \
+    def __init__(self, unique_id, model, agents, sub_agents, reverse_groups,
                  min_for_group, policy = None, link_type = None, active = True):
         super().__init__(unique_id, model)
         self._agents = agents 

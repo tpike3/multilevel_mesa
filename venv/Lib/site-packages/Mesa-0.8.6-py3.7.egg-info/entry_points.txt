@@ -1,0 +1,4 @@
+
+        [console_scripts]
+        mesa=mesa.main:cli
+    
