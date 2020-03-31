@@ -9,15 +9,16 @@ from codecs import open
 
 
 #get the readme file for the long description below--optional
-with open('README.md', 'rb', encoding='utf-8') as f:
-    readme = f.read()
+with open('README.md', 'r') as fh:
+    long_description = fh.read()
 
 # see https://github.com/pypa/sampleproject/blob/master/setup.py for explanation of each parameter and links
 setup(
     name='multilevel_mesa',
-    version='0.0.1',
-    description="Provides Extension module to Mesa to allow for Heirarhcies and Modules of Agents",
-    long_description=readme,
+    version='0.0.2',
+    description="Provides Extension module to Mesa to allow for Hierarchies and Modules of Agents",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/tpike3/ml_mesa',
     author='Tom Pike',
     author_email='tpike3@gmu.edu',

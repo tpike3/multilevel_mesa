@@ -19,15 +19,15 @@ The main areas for the ML_Mesa Class are:
     --Granular agent functions (line 70)
         -- add
         -- remove
-    --Explicit approach (line )
+    --Explicit approach (line 422 )
         -- form_group
         --reassess_group
     --Core functions- steps and buffers (line 278)
         --const_buffer
         --group_buffer
         --step
-    --Network based approach (line)
-        --net schedule with 3 options
+    --Network based approach (line 671)
+        --net multi_sched with 3 options
             1- link
             2- link type
             3- link attribute
@@ -37,13 +37,14 @@ The main areas for the ML_Mesa Class are:
 
 from collections import OrderedDict, defaultdict
 import networkx as nx
-from mesa.time import RandomActivation
+#from mesa.time import BaseScheduler
 import itertools
 
-class MultiLevel_Mesa(RandomActivation):
+class MultiLevel_Mesa:#(BaseScheduler):
     
     def __init__(self, model, min_for_group = 2, group_to_net = False):
-        super().__init__(model)
+        #super().__init__(model)
+        self.model = model
         #Maintains master dictionary of all agents in model
         self._agents = OrderedDict()
         #Maintains master network of all agents in model
@@ -51,7 +52,7 @@ class MultiLevel_Mesa(RandomActivation):
         #Provides view of agents by type
         self.agents_by_type = defaultdict(dict)
         #Dictionary of agents who are active for each time step
-        self.schedule = OrderedDict()
+        self.multi_sched = OrderedDict()
         #Minimum number of agent to eleminate a group agent
         self.min = min_for_group
         #Counter for Group Agent tracking
@@ -62,7 +63,13 @@ class MultiLevel_Mesa(RandomActivation):
         self.groups = OrderedDict()
         #Reverse dictionary of Agents to Groups by linktype to which they belong
         self.reverse_groups = defaultdict(lambda: defaultdict(set))
-        
+        #Mirror Mesa time set up
+        self.time = 0
+        #Mirror Mesa step set up
+        self.steps = 0
+
+
+
     @property
     def agent_count(self):
         '''
@@ -78,10 +85,15 @@ class MultiLevel_Mesa(RandomActivation):
     def active_agent_count(self):
         '''
         Acts as an attribute of ML_Mesa Class
-        Provides number of group agents in the schedule
+        Provides number of group agents in the multi schedule
         '''
-        return len(self.schedule.keys())
-    
+        return len(self.multi_sched.keys())
+
+    @property
+    def agents(self):
+        return list(self.multi_sched.values())
+
+
     def get_agent_group(self, agent, link_type):
         '''
         Function to make easier for users to get agent group
@@ -103,11 +115,11 @@ class MultiLevel_Mesa(RandomActivation):
     #########################################
        
     
-    def add(self, agent, schedule = True, net = True): 
+    def add(self, agent, multi_sched = True, net = True):
         '''
         Params: 
             agent - single granular agent object
-            Schedule - if True will add the agent to the schedule
+            mutli_sched - if True will add the agent to the multi - schedule
         
         Adds agents to: 
             - Master agent OrderedDict (self._agents)
@@ -123,8 +135,8 @@ class MultiLevel_Mesa(RandomActivation):
             self.net.add_node(agent) 
         ##Will change initial test
         
-        if schedule: 
-            self.schedule[agent.unique_id] = agent
+        if multi_sched:
+            self.multi_sched[agent.unique_id] = agent
 
     ###########################################################
     #
@@ -152,9 +164,9 @@ class MultiLevel_Mesa(RandomActivation):
             - Reverse Groups
         '''
         
-        if m in self.schedule.keys():
-            #remove from schedule
-            del self.schedule[m]
+        if m in self.multi_sched.keys():
+            #remove from multi_sched
+            del self.multi_sched[m]
         
         #remove group agent from all reverse_groups
         for group_dicts in self.reverse_groups.values():
@@ -191,7 +203,7 @@ class MultiLevel_Mesa(RandomActivation):
             - Master agent list (self._agents)
             - Master agent network (self.net)
             - Master agents by type Dict (self.agents_by_type)
-            - Schedule
+            - multi_sched
             - Reverse Groups
         '''
         del self._agents[agent.unique_id]
@@ -217,8 +229,8 @@ class MultiLevel_Mesa(RandomActivation):
                             #Helper function to deal with groups within groups
                             self._remove_groups_recursion(m, group_type)
              
-        if agent.unique_id in self.schedule.keys(): 
-            del self.schedule[agent.unique_id] 
+        if agent.unique_id in self.multi_sched.keys():
+            del self.multi_sched[agent.unique_id]
         #self._remove_groups_recursion.cache_clear()
         
     
@@ -233,7 +245,7 @@ class MultiLevel_Mesa(RandomActivation):
             - Master agent list (self._agents)
             - Master agent network (self.net)
             - Master agents by type Dict (self.agents_by_type)
-            - Schedule
+            - multi_sched
             - Reverse Groups        
         
         '''
@@ -259,9 +271,9 @@ class MultiLevel_Mesa(RandomActivation):
                         group_status, group_type = self.groups[m].remove(agent.unique_id, self.min)
                         #if agent dies
                         if group_status != None:
-                            if m in self.schedule.keys():
-                                #remove fsom schedule
-                                del self.schedule[m]
+                            if m in self.multi_sched.keys():
+                                #remove from multi_sched
+                                del self.multi_sched[m]
                             #remove group agent from all reverse_groups
                             #get list of sub_agents in mets
                             subs = list(self.groups[m].sub_agents.values())
@@ -275,8 +287,8 @@ class MultiLevel_Mesa(RandomActivation):
                             if m in self.net:
                                 self.net.remove_node(m)
         
-        if agent.unique_id in self.schedule.keys(): 
-            del self.schedule[agent.unique_id] 
+        if agent.unique_id in self.multi_sched.keys():
+            del self.multi_sched[agent.unique_id]
   
     
     def remove(self, agent):
@@ -291,7 +303,7 @@ class MultiLevel_Mesa(RandomActivation):
             - Master agent list (self._agents)
             - Master agent network (self.net)
             - Master agents by type Dict (self.agents_by_type)
-            - Schedule
+            - multi_sched
             - Reverse Groups        
         
         '''
@@ -309,16 +321,16 @@ class MultiLevel_Mesa(RandomActivation):
     #
     ########################################################################
     
-    def group_iterate(self, groups, determine_id, double, policy, group_net, \
+    def group_iterate(self, groups, determine_id, double, policy, group_net,
                      link_type):
         '''
-        Main Function of ML MEsa
+        Main Function of ML Mesa
         
         Parameters: 
             groups = list of bilateral links to for Group
-            determine_id: paraetmer ot pass in unique_id for group agent
-            double: True of False- remove agent form schedule
-            policy: object of gorup polcies toward agents
+            determine_id: parameter to pass in unique_id for group agent
+            double: True of False- remove agent from multi_sched
+            policy: object of group policies toward agents
             group_net: whether group can form more hierarchies
             link_type: type of link category to which group belongs
             
@@ -352,12 +364,12 @@ class MultiLevel_Mesa(RandomActivation):
                    #create new group agent        
                    group2_dict = {unique_id: dict((x.unique_id, x) for x in edge)}
                    
-                   ma = GroupAgent(unique_id, self.model, self._agents,\
-                          group2_dict[unique_id], self.reverse_groups, self.min, \
+                   ma = GroupAgent(unique_id, self.model, self._agents,
+                          group2_dict[unique_id], self.reverse_groups, self.min,
                           policy, link_type)
                    ma.form_graph(edge)
-                   # add to schedule
-                   self.schedule[ma.unique_id] = ma
+                   # add to multi_sched
+                   self.multi_sched[ma.unique_id] = ma
                    #add to management structures
                    #Groups ordereddict
                    self.groups[ma.unique_id] = ma
@@ -367,12 +379,12 @@ class MultiLevel_Mesa(RandomActivation):
                    #network if not there
                    if self.net.has_edge(edge[0], edge[1]) == False:
                        self.add_link([edge])
-                   #remove from schedule
+                   #remove from multi_sched
                    if double == False: 
-                       if edge[0].unique_id in self.schedule.keys():
-                               del self.schedule[edge[0].unique_id]
-                       if edge[1].unique_id in self.schedule.keys(): 
-                               del self.schedule[edge[1].unique_id]
+                       if edge[0].unique_id in self.multi_sched.keys():
+                               del self.multi_sched[edge[0].unique_id]
+                       if edge[1].unique_id in self.multi_sched.keys():
+                               del self.multi_sched[edge[1].unique_id]
                    if group_net == True: 
                        self.net.add_node(ma)
                #one is part of a group_agent so the other will join
@@ -390,10 +402,10 @@ class MultiLevel_Mesa(RandomActivation):
                       self.reverse_groups[edge[0].unique_id][link_type].add(group_a) #set add function
                       #add to network
                       self.add_link([edge])
-                      #delete from schedule
+                      #delete from multi_sched
                       if double == False: 
-                        if edge[0].unique_id in self.schedule.keys():
-                                del self.schedule[edge[0].unique_id]
+                        if edge[0].unique_id in self.multi_sched.keys():
+                                del self.multi_sched[edge[0].unique_id]
                   else: 
                       for agent in self.reverse_groups[edge[0].unique_id][link_type]:
                           group_a = agent
@@ -405,10 +417,10 @@ class MultiLevel_Mesa(RandomActivation):
                       self.reverse_groups[edge[1].unique_id][link_type].add(group_a) #set add function 
                       #add to network
                       self.add_link([edge])
-                      #delete from schedule
+                      #delete from multi_sched
                       if double == False: 
-                        if edge[1].unique_id in self.schedule.keys(): 
-                                del self.schedule[edge[1].unique_id]
+                        if edge[1].unique_id in self.multi_sched.keys():
+                                del self.multi_sched[edge[1].unique_id]
                #both are part of a group_agent and so will maintain a link
                else: 
                   #make sure there is a link between agents
@@ -447,12 +459,12 @@ class MultiLevel_Mesa(RandomActivation):
     
         return edges
     
-    def form_group(self, process, *args, determine_id = 'default', \
-                      double = False, policy = None, group_type = None,\
+    def form_group(self, process, *args, determine_id = 'default',
+                      double = False, policy = None, group_type = None,
                       **kwargs):
         '''
         Concept: Function works with a user defined process to take in lists of 
-        agents who should be gorup together and runs them through the group_agent 
+        agents who should be grouped together and runs them through the group_agent 
         process making sure they are still alive and not duplicating group_agents
         
         Helper function: group_remove(self) checks to see if agent is still 
@@ -511,7 +523,7 @@ class MultiLevel_Mesa(RandomActivation):
         Critical Dynamics: 
             - process must return 2 agents who are no longer linked
             - group-agents then receives list of agents to remove
-            - if group-agent has no subagents it is removed from schedule
+            - if group-agent has no subagents it is removed from multi schedule
         
         '''
                 
@@ -544,7 +556,7 @@ class MultiLevel_Mesa(RandomActivation):
                          self.reverse_groups[edges[0].unique_id].remove(group_agent.unique_id)
                          self.reverse_groups[edges[1].unique_id].remove(group_agent.unique_id)       
                  else: 
-                     raise Exception("Removing subagents from a group", \
+                     raise Exception("Removing subagents from a group",
                                      "requires either 2 agents ", 
                                      "or a list of agents. ",)
                     
@@ -556,15 +568,15 @@ class MultiLevel_Mesa(RandomActivation):
             #function to add independent agent back in 
             if reintroduce == True and peel_list != None: 
                 for agent in peel_list: 
-                    self.add(agent, schedule = True)
+                    self.add(agent, multi_sched = True)
             
             # call function to remove groupagents if necessary
             group_status, group_type = group_agent.remove(subs_to_remove, self.min)
             #Remove group-agents with no sub_agents
             if group_status != None: 
-                #remove from schedule
-                if group_agent.unique_id in self.schedule.keys(): 
-                    del self.schedule[group_agent.unique_id]
+                #remove from multi_sched
+                if group_agent.unique_id in self.multi_sched.keys():
+                    del self.multi_sched[group_agent.unique_id]
                 del self.groups[group_agent.unique_id]
                 #iterate through subs
                 for a in subs_to_remove: 
@@ -624,14 +636,14 @@ class MultiLevel_Mesa(RandomActivation):
         advantages
         '''
                 
-        group_keys = list(self.schedule.keys())
+        group_keys = list(self.multi_sched.keys())
               
         if shuffled: 
             self.model.random.shuffle(group_keys)
         
         for key in group_keys: 
-            if key in self.schedule.keys(): 
-                yield self.schedule[key]
+            if key in self.multi_sched.keys():
+                yield self.multi_sched[key]
     
     def step(self, shuffled = True, by_type = False, const_update = False):
         '''
@@ -660,6 +672,9 @@ class MultiLevel_Mesa(RandomActivation):
         if const_update != False: 
             for agent in self.const_buffer(const_update):
                 agent.step()
+
+        self.steps += 1
+        self.time += 1
         
         
     ######################################################################
@@ -668,10 +683,10 @@ class MultiLevel_Mesa(RandomActivation):
     #
     ######################################################################
     
-    def net_group(self, link_type = None,link_value = None, \
+    def net_group(self, link_type = None,link_value = None,
                      double = False, policy = None):
         '''
-        Concept: Updates schedule specified by link data either type of 
+        Concept: Updates multi_sched specified by link data either type of
         connection or value
         
         Params: 
@@ -699,22 +714,22 @@ class MultiLevel_Mesa(RandomActivation):
                 determine_id = str(link_type)+"_"+str(link_value)        
                     
            
-            self.group_iterate(_groups, determine_id, double= double,\
-                              policy = policy, group_net = self.group_net,\
+            self.group_iterate(_groups, determine_id, double= double,
+                              policy = policy, group_net = self.group_net,
                               link_type = link_type)
             
         
         else: 
-            # Add all linked nodes to schedule
+            # Add all linked nodes to multi_sched
             _groups = list(self.net.edges())
-            self.group_iterate(_groups, determine_id = "default", double= double,\
-                              policy = policy, group_net = self.group_net, \
+            self.group_iterate(_groups, determine_id = "default", double= double,
+                              policy = policy, group_net = self.group_net,
                               link_type = link_type)
             #active_list = []
             #for group in groups: 
                 
         
-    def reassess_net_group(self, link_type = None,\
+    def reassess_net_group(self, link_type = None,
                  link_value = None,):
         '''
         Concept: Updates group specified by link data either type of 
@@ -747,13 +762,13 @@ class MultiLevel_Mesa(RandomActivation):
                                         
                     #Remove group-agents with no sub_agents
                     if group_status != None: 
-                        #add individual agent back in schedule
+                        #add individual agent back in multi_sched
                         for agent in link:
                             if agent in self._agents.values():
-                                self.add(agent, schedule = True)
-                        #remove from schedule
-                        if group_agent.unique_id in self.schedule.keys():
-                            del self.schedule[group_agent.unique_id]
+                                self.add(agent, multi_sched = True)
+                        #remove from multi_sched
+                        if group_agent.unique_id in self.multi_sched.keys():
+                            del self.multi_sched[group_agent.unique_id]
                         #remove from group dictionary
                         del self.groups[group_agent.unique_id]
                         #iterate through subs and remove from reverse group
@@ -777,7 +792,7 @@ class MultiLevel_Mesa(RandomActivation):
         
     def remove_link(self, agents):
         '''      
-        Remove links to master materowks based on agent intiatiation
+        Remove links to master network based on agent initiatiation
         
         Params: 
             agents - list of agent objects
@@ -803,7 +818,7 @@ class GroupAgent(Agent, MultiLevel_Mesa):
     This porvides the ability to manage the GroupAgents which form and bring in 
     group_agent functions
     
-    There atre two main area of functions
+    There are two main area of functions
      Helper functions:
          -- make_types
          -- form_graph
@@ -818,7 +833,7 @@ class GroupAgent(Agent, MultiLevel_Mesa):
          --step_by_type
     '''
     
-    def __init__(self, unique_id, model, agents, sub_agents, reverse_groups, \
+    def __init__(self, unique_id, model, agents, sub_agents, reverse_groups,
                  min_for_group, policy = None, link_type = None, active = True):
         super().__init__(unique_id, model)
         self._agents = agents 
@@ -916,12 +931,12 @@ class GroupAgent(Agent, MultiLevel_Mesa):
             del self.subs_by_type[type(agent)][agent.unique_id]
         
         if len(self.sub_agents.keys()) < min_for_group:
-            #Place agent back in schedule
+            #Place agent back in multi_sched
             if reintroduce == True: 
                 for agent in self.sub_agents.values():
                     #Mkae sure agents are still alive
                     if agent.unique_id in self._agents.keys():
-                        self.model.ml.schedule[agent.unique_id] = agent
+                        self.model.ml.multi_sched[agent.unique_id] = agent
                         self.reverse_groups[agent.unique_id][self.group_type].discard(self.unique_id)
             #must return group_type to get right dictionary in reverse_groups
             return "died", self.group_type
