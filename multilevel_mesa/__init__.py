@@ -13,6 +13,6 @@ __all__ = ["MultiLevel_Mesa"]
 
 
 __title__ = 'multilevel_mesa'
-__version__ = '0.0.2'
+__version__ = '0.0.1'
 __license__ = 'MIT'
 __copyright__ = 'Copyright %s Tom Pike' % datetime.date.today().year

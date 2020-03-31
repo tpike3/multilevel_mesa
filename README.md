@@ -38,20 +38,20 @@ Creating an instance of Multi-level Mesa requires no parameters, and initiates o
 
         def __init__(self, <parameters for model>):
 
-            self.schedule = mlm.MultiLevel_Mesa(self)
+            self.ml = mlm.MultiLevel_Mesa(self)
 
             for a in range(model_population):
                 a = Agent()
-                self.schedule.add(a)
+                self.ml.add(a)
 
         def step(): 
 
             #specify criteria for group formation
-            self.schedu;e.net_group(link_type = <some link type to form a group>,\
+            self.ml.net_group(link_type = <some link type to form a group>,\
                         link_value = <some link value threshold to form a group>)
             
             #step the groups and agents
-            self.schedule.step()
+            self.ml.step()
 
 
 Attribute: 

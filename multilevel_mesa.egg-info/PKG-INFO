@@ -1,7 +1,7 @@
-Metadata-Version: 2.1
+Metadata-Version: 1.1
 Name: multilevel-mesa
-Version: 0.0.2
-Summary: Provides Extension module to Mesa to allow for Hierarchies and Modules of Agents
+Version: 0.0.1
+Summary: Provides Extension module to Mesa to allow for Heirarhcies and Modules of Agents
 Home-page: https://github.com/tpike3/ml_mesa
 Author: Tom Pike
 Author-email: tpike3@gmu.edu
@@ -12,7 +12,7 @@ Description: # Multi-Level Mesa
         
         Multi-level Mesa has three main components. First, a collection of managers which tracks the agents, the modules of agents (groups), the network of agents, and agents who belong to an existing group, and the schedule. Second, a series of functions which provides the user different options to form groups or dissolve them. Third, a group class which allows for the inclusion of different policies, manages the behavior and status of the group, and implicitly produces hierarchies within the complex system. (Figure 1)
         
-        ![Multi-level Mesa Schematic](https://github.com/tpike3/ml_mesa/blob/master/multilevel_mesa/picture/MultiLevel_Mesa%20Schematic.png)
+        ![Multi-level Mesa Schematic](https://github.com/tpike3/Multi-level_mesa/blob/master/Multi-level_mesa/picture/Multi-level-Mesa%20Schematic.png)
         **Figure 1**
         
         ## Requirements
@@ -28,39 +28,13 @@ Description: # Multi-Level Mesa
         
         ## Examples of Multi-Level Mesa
         
-        Examples of multilevel_mesa are available at [Sugarscape Models]:https://github.com/tpike3/SugarScape
+        Examples of multilevel_mesa are available at [Sugarscape Models]: https://github.com/tpike3/SugarScape
         
         These examples are various instantiations of the Sugar and Spice trading model described in Chapter 4 of *Growing Artificial Societies* by ROb Axtell and Joshua Epstein.   
         
         ## Creating an Multi-level Mesa Instance and the Multi-level Mesa Managers
         
         Creating an instance of Multi-level Mesa requires no parameters, and initiates one attribute and six managers. 
-        
-        ### Example Instance and Use
-            # import with Mesa
-            from mesa import Model
-            import multilevel_mesa as mlm
-            
-            #create and instance in you main model class
-            class Main(Model):
-        
-                def __init__(self, <parameters for model>):
-        
-                    self.schedule = mlm.MultiLevel_Mesa(self)
-        
-                    for a in range(model_population):
-                        a = Agent()
-                        self.schedule.add(a)
-        
-                def step(): 
-        
-                    #specify criteria for group formation
-                    self.schedu;e.net_group(link_type = <some link type to form a group>,\
-                                link_value = <some link value threshold to form a group>)
-                    
-                    #step the groups and agents
-                    self.schedule.step()
-        
         
         Attribute: 
         1. MultiLevel_Mesa.id_counter, provides a unique_id for each group
@@ -95,7 +69,7 @@ Description: # Multi-Level Mesa
                 policy = None, group_type = None,  **kwargs):
             ```
         
-        The MultiLevel_Mesa.form_group function requires one parameter which is the user specified process which determines whether or not an agent should be in a group with other agents. The \*args and \*\*kwargs allows the user to pass in the parameters for this process. The determine_id parameters ensures each group gets a unique id. If default it will simply append a number based on the id_counter attribute to the string 'group'. For the user to pass in an id he or she must yield the id as the first element of a tuple generated from the yield operator from the user defined process. Users must choose this id carefully as the id is used in the set operations to merge groups. The double parameter takes a Boolean value and is defaulted to False. If True the agent will remain in the schedule as an independent entity and be added as part of the group, while if False the agent is removed. This feature is to provide users maximum flexibility for agent scheduling and group processes. The policy parameter passes in the step processes for the group, which can consist of only internal processes or can consist of group processes and then execute the individual agent processes.  The group_type parameter takes a string and allows the user to specify different types of groups so an agent can belong to different types of group such as â€˜familyâ€™ and â€˜firmâ€™.     
+        The MultiLevel_Mesa.form_group function requires one parameter which is the user specified process which determines whether or not an agent should be in a group with other agents. The \*args and \*\*kwargs allows the user to pass in the parameters for this process. The determine_id parameters ensures each group gets a unique id. If default it will simply append a number based on the id_counter attribute to the string 'group'. For the user to pass in an id he or she must yield the id as the first element of a tuple generated from the yield operator from the user defined process. Users must choose this id carefully as the id is used in the set operations to merge groups. The double parameter takes a Boolean value and is defaulted to False. If True the agent will remain in the schedule as an independent entity and be added as part of the group, while if False the agent is removed. This feature is to provide users maximum flexibility for agent scheduling and group processes. The policy parameter passes in the step processes for the group, which can consist of only internal processes or can consist of group processes and then execute the individual agent processes.  The group_type parameter takes a string and allows the user to specify different types of groups so an agent can belong to different types of group such as ‘family’ and ‘firm’.     
         
         #### User Defined Dissolution Process: Multi-level_Mesa.reassess_group
         
@@ -184,4 +158,3 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Classifier: Development Status :: 2 - Pre-Alpha
 Classifier: Natural Language :: English
-Description-Content-Type: text/markdown
